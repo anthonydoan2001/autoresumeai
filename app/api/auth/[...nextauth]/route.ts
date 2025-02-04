@@ -1,8 +1,8 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { NextAuthOptions } from "next-auth";
+import { AuthOptions } from "next-auth";
 
-export const authOptions: NextAuthOptions = {
+export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -11,7 +11,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Replace with actual user authentication logic (e.g., DB lookup)
+        // Replace this with real authentication logic (e.g., database lookup)
         const user = { id: "1", name: "John Doe", email: credentials?.email };
 
         if (user) return user;
@@ -25,8 +25,9 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET, // Use secret from env variables
+  secret: process.env.NEXTAUTH_SECRET, // Ensure this is set in .env.local
 };
 
 const handler = NextAuth(authOptions);
+
 export { handler as GET, handler as POST };
