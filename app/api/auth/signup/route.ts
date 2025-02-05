@@ -41,7 +41,9 @@ export async function POST(req: Request) {
       `;
 
       if (oauthAccounts.length > 0) {
-        const providers = oauthAccounts.map((acc) => acc.provider);
+        const providers = oauthAccounts.map(
+          (acc: { provider: string }) => acc.provider
+        );
         return NextResponse.json(
           {
             error: "Account exists with social login",
