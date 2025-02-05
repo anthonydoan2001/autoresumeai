@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { DEFAULT_USER_PERMISSIONS } from "@/app/lib/auth";
-import { AuthUser } from "@/app/types/auth";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/app/lib/prisma";
 
 export async function POST(req: Request) {
   try {
@@ -25,25 +22,17 @@ export async function POST(req: Request) {
     }
 
     // First check if user exists with this email
-    const existingUsers = await prisma.$queryRaw<{ count: number }[]>`
-      SELECT COUNT(*) as count
-      FROM users
-      WHERE email = ${email}
-    `;
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        accounts: true,
+      },
+    });
 
-    if (existingUsers[0].count > 0) {
+    if (existingUser) {
       // Check if this email is associated with OAuth accounts
-      const oauthAccounts = await prisma.$queryRaw<{ provider: string }[]>`
-        SELECT provider
-        FROM accounts a
-        JOIN users u ON u.id = a.userId
-        WHERE u.email = ${email}
-      `;
-
-      if (oauthAccounts.length > 0) {
-        const providers = oauthAccounts.map(
-          (acc: { provider: string }) => acc.provider
-        );
+      if (existingUser.accounts.length > 0) {
+        const providers = existingUser.accounts.map((acc) => acc.provider);
         return NextResponse.json(
           {
             error: "Account exists with social login",
@@ -70,45 +59,25 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user with default role and permissions
-    const result = await prisma.$queryRaw<AuthUser[]>`
-      INSERT INTO users (
-        id,
-        name,
+    const newUser = await prisma.user.create({
+      data: {
+        name: name || null,
         email,
-        password,
-        "emailVerified",
-        image,
-        role,
-        permissions,
-        tier,
-        "subscriptionStatus",
-        "createdAt",
-        "updatedAt"
-      ) VALUES (
-        gen_random_uuid(),
-        ${name || null},
-        ${email},
-        ${hashedPassword},
-        null,
-        null,
-        'USER',
-        ${DEFAULT_USER_PERMISSIONS}::text[],
-        'FREE',
-        null,
-        CURRENT_TIMESTAMP,
-        CURRENT_TIMESTAMP
-      )
-      RETURNING 
-        id,
-        name,
-        email,
-        role,
-        permissions,
-        tier,
-        "subscriptionStatus"
-    `;
-
-    const newUser = result[0];
+        password: hashedPassword,
+        role: "USER",
+        permissions: DEFAULT_USER_PERMISSIONS,
+        tier: "FREE",
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        permissions: true,
+        tier: true,
+        subscriptionStatus: true,
+      },
+    });
 
     console.log("User created successfully:", {
       id: newUser.id,
@@ -139,7 +108,5 @@ export async function POST(req: Request) {
       },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
