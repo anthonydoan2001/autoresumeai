@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { AuthUser } from "@/app/types/auth";
 import { randomUUID } from "crypto";
@@ -191,7 +191,7 @@ export const authOptions: NextAuthOptions = {
 
         // If no user exists, create a new one
         const userId = randomUUID();
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
           await tx.user.create({
             data: {
               id: userId,
