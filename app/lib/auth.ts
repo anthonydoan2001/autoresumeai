@@ -4,10 +4,11 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import GithubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { AuthUser } from "@/app/types/auth";
 import { randomUUID } from "crypto";
+import { prisma } from "./prisma";
 
 export type UserRole = "USER" | "ADMIN";
 
@@ -31,8 +32,6 @@ export const ADMIN_PERMISSIONS: Permission[] = [
   "manage:users",
   "manage:roles",
 ];
-
-const prisma = new PrismaClient();
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
