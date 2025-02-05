@@ -85,7 +85,7 @@ export const authOptions: NextAuthOptions = {
         if (user.accounts.length > 0) {
           const providers = user.accounts
             .map(
-              (acc) =>
+              (acc: { provider: string }) =>
                 acc.provider.charAt(0).toUpperCase() + acc.provider.slice(1)
             )
             .join(" or ");
@@ -162,7 +162,7 @@ export const authOptions: NextAuthOptions = {
         if (existingUser) {
           // Check if they're trying to use the same provider they signed up with
           const hasProvider = existingUser.accounts.some(
-            (acc) => acc.provider === account.provider
+            (acc: { provider: string }) => acc.provider === account.provider
           );
 
           if (hasProvider) {
